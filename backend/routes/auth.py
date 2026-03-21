@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import User
 from schemas import UserCreate, UserLogin
-
+from auth_utils import create_access_token
 router = APIRouter()
 
 def get_db():
@@ -23,6 +23,13 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
 @router.post("/login")
 def login(user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
+
     if not db_user or db_user.password != user.password:
         return {"error": "invalid credentials"}
-    return {"message": "login success"}
+
+    token = create_access_token({"sub": db_user.email})
+
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }
