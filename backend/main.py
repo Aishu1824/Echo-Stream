@@ -10,7 +10,7 @@ from database import engine, Base, SessionLocal
 from models import AudioFile
 from routes import auth
 from auth_utils import SECRET_KEY, ALGORITHM
-
+from worker import process_audio
 # create tables
 Base.metadata.create_all(bind=engine)
 
@@ -63,6 +63,7 @@ async def upload_audio(
     db.add(new_audio)
     db.commit()
     db.close()
+    process_audio.delay(file.filename)
 
     return {
         "status": "uploaded",
