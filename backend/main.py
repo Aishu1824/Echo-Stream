@@ -57,15 +57,34 @@ async def upload_audio(
     with open(file.filename, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # save metadata in DB
     db = SessionLocal()
-    new_audio = AudioFile(filename=file.filename)
+
+    # create DB entry first
+    new_audio = AudioFile(
+        filename=file.filename,
+        status="processing"
+    )
     db.add(new_audio)
     db.commit()
+    db.refresh(new_audio)   # ⭐ VERY IMPORTANT to get ID
+
+    # send task with audio_id
+    process_audio.delay(new_audio.id)
+
     db.close()
-    process_audio.delay(file.filename)
 
     return {
         "status": "uploaded",
+        "audio_id": new_audio.id,
         "uploaded_by": user
+    }
+@app.get("/audio/{audio_id}")
+def get_status(audio_id: int):
+    db = SessionLocal()
+    audio = db.query(AudioFile).filter(AudioFile.id == audio_id).first()
+    db.close()
+
+    return {
+        "filename": audio.filename,
+        "status": audio.status
     }
