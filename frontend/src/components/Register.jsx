@@ -1,11 +1,11 @@
 import { useState } from "react";
 
-function Login() {
+function Register() {
   const [email,setEmail] = useState("");
   const [password,setPassword] = useState("");
 
-  const handleLogin = async () => {
-    const res = await fetch("http://127.0.0.1:8000/login",{
+  const handleRegister = async () => {
+    const res = await fetch("http://127.0.0.1:8000/signup",{
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({ email,password })
@@ -13,15 +13,13 @@ function Login() {
 
     const data = await res.json();
 
-    localStorage.setItem("token",data.access_token);
-
-    window.location.reload();
+    alert("User created. Now login.");
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-10 rounded shadow w-80 text-center">
-        <h2 className="text-xl mb-4 font-semibold">Login</h2>
+        <h2 className="text-xl mb-4 font-semibold">Register</h2>
 
         <input
           placeholder="Email"
@@ -37,23 +35,14 @@ function Login() {
         />
 
         <button
-          onClick={handleLogin}
-          className="bg-blue-600 text-white w-full py-2 rounded"
+          onClick={handleRegister}
+          className="bg-green-600 text-white w-full py-2 rounded"
         >
-          Login
+          Create Account
         </button>
-                    <p className="mt-4 text-sm">
-            New user?
-            <span
-                className="text-blue-600 cursor-pointer"
-                onClick={()=>window.location.href="/register"}
-            >
-                Register
-            </span>
-            </p>
       </div>
     </div>
   );
 }
 
-export default Login;
+export default Register;

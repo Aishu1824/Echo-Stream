@@ -1,23 +1,23 @@
-import Upload from "./components/Upload";
-// Add this line at the top of App.jsx
 import Login from "./components/Login";
+import Register from "./components/Register";
+import Dashboard from "./components/Dashboard";
+
 function App() {
-  return (
-    <div className="min-h-screen bg-gray-100">
-      
-      {/* Navbar */}
-      <div className="bg-white shadow px-8 py-4 text-2xl font-bold">
-        🎧 EchoStream AI
-      </div>
+  const token = localStorage.getItem("token");
+  const path = window.location.pathname;
 
-      {/* Center Section */}
-      <div className="flex items-center justify-center mt-24">
-        <Login/>
-        <Upload />
-      </div>
+  // 1. If logged in, always show Dashboard (unless they logout)
+  if (token) {
+    return <Dashboard />;
+  }
 
-    </div>
-  );
+  // 2. If not logged in and on /register path, show Register
+  if (path === "/register") {
+    return <Register />;
+  }
+
+  // 3. Default: Show Login
+  return <Login />;
 }
 
 export default App;
