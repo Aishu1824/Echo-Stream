@@ -1,5 +1,6 @@
 import Upload from "./components/Upload";
-
+// Add this line at the top of App.jsx
+import Login from "./components/Login";
 function App() {
   return (
     <div className="min-h-screen bg-gray-100">
@@ -11,6 +12,7 @@ function App() {
 
       {/* Center Section */}
       <div className="flex items-center justify-center mt-24">
+        <Login/>
         <Upload />
       </div>
 
