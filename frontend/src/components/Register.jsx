@@ -13,7 +13,8 @@ function Register() {
 
     const data = await res.json();
 
-    alert("User created. Now login.");
+    alert("Account created. Please login.");
+    window.location.href = "/login";
   };
 
   return (

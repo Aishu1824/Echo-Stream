@@ -13,9 +13,8 @@ function Login() {
 
     const data = await res.json();
 
-    localStorage.setItem("token",data.access_token);
-
-    window.location.reload();
+    localStorage.setItem("token", data.access_token);
+    window.location.href = "/";
   };
 
   return (
@@ -42,15 +41,15 @@ function Login() {
         >
           Login
         </button>
-                    <p className="mt-4 text-sm">
-            New user?
-            <span
-                className="text-blue-600 cursor-pointer"
-                onClick={()=>window.location.href="/register"}
-            >
-                Register
-            </span>
-            </p>
+                        <p className="text-sm mt-4">
+      New user?
+      <span
+        className="text-blue-600 cursor-pointer"
+        onClick={() => window.location.href = "/register"}
+      >
+        Register
+      </span>
+    </p>
       </div>
     </div>
   );
