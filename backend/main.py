@@ -95,10 +95,11 @@ def list_audios(user=Depends(get_current_user)):
     db.close()
 
     return [
-        {
-            "id": a.id,
-            "filename": a.filename,
-            "status": a.status
-        }
-        for a in audios
-    ]
+    {
+        "id": a.id,
+        "filename": a.filename,
+        "status": a.status,
+        "transcript": a.transcript
+    }
+    for a in audios
+]

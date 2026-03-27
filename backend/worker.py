@@ -16,16 +16,18 @@ def process_audio(audio_id):
     audio = db.query(AudioFile).filter(AudioFile.id == audio_id).first()
 
     if not audio:
-        print("Audio not found")
-        db.close()
         return
 
     print("Processing:", audio.filename)
 
     time.sleep(10)
 
+    # ⭐ fake transcript
+    audio.transcript = f"Transcript of {audio.filename}"
     audio.status = "completed"
+
     db.commit()
     db.close()
 
-    print("Completed:", audio_id)
+    print("Completed")
+    
