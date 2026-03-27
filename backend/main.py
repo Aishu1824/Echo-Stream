@@ -66,9 +66,8 @@ async def upload_audio(
     )
     db.add(new_audio)
     db.commit()
-    db.refresh(new_audio)   # ⭐ VERY IMPORTANT to get ID
+    db.refresh(new_audio)
 
-    # send task with audio_id
     process_audio.delay(new_audio.id)
 
     db.close()
@@ -88,3 +87,18 @@ def get_status(audio_id: int):
         "filename": audio.filename,
         "status": audio.status
     }
+
+@app.get("/audios")
+def list_audios(user=Depends(get_current_user)):
+    db = SessionLocal()
+    audios = db.query(AudioFile).all()
+    db.close()
+
+    return [
+        {
+            "id": a.id,
+            "filename": a.filename,
+            "status": a.status
+        }
+        for a in audios
+    ]

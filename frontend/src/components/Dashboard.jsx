@@ -1,4 +1,5 @@
 import Upload from "./Upload";
+import AudioList from "./AudioList";
 
 function Dashboard() {
   const logout = () => {
@@ -21,6 +22,7 @@ function Dashboard() {
 
       <div className="flex justify-center mt-20">
         <Upload />
+        <AudioList/>
       </div>
 
     </div>

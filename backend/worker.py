@@ -1,8 +1,8 @@
 from celery import Celery
 import time
+
 from database import SessionLocal
 from models import AudioFile
-
 
 celery_app = Celery(
     "worker",
@@ -15,11 +15,17 @@ def process_audio(audio_id):
 
     audio = db.query(AudioFile).filter(AudioFile.id == audio_id).first()
 
+    if not audio:
+        print("Audio not found")
+        db.close()
+        return
+
     print("Processing:", audio.filename)
+
     time.sleep(10)
 
     audio.status = "completed"
     db.commit()
     db.close()
 
-    print("Done")
+    print("Completed:", audio_id)
