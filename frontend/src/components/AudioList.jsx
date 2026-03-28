@@ -1,87 +1,105 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 function AudioList() {
-  const [audios,setAudios] = useState([]);
+  const [audios, setAudios] = useState([]);
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState(null);
 
-  useEffect(()=>{
-  fetchAudios();
-
-  const interval = setInterval(()=>{
-    fetchAudios();
-  },3000);
-
-  return ()=>clearInterval(interval);
-},[]);
-
+  // Fetch Logic
   const fetchAudios = async () => {
-    const token = localStorage.getItem("token");
-    console.log("TOKEN:", token);
-    const res = await fetch("http://127.0.0.1:8000/audios",{
-      headers:{
-        Authorization:`Bearer ${token}`,
-      },
-    });
-
-    const data = await res.json();
-    setAudios(data);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://127.0.0.1:8000/audios", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setAudios(data);
+    } catch (error) {
+      console.error("Fetch failed:", error);
+    }
   };
-  const sortedAudios = [...audios].sort(
-  (a, b) => new Date(b.upload_time) - new Date(a.upload_time)
-);
-  const filteredAudios = sortedAudios.filter((a) =>
-  a.filename.toLowerCase().includes(search.toLowerCase()) ||
-  (a.transcript &&
-    a.transcript.toLowerCase().includes(search.toLowerCase()))
-);
+
+  useEffect(() => {
+    fetchAudios();
+    const interval = setInterval(fetchAudios, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Performance: Memoize the Filtered & Sorted list
+  const filteredAudios = useMemo(() => {
+    return [...audios]
+      .sort((a, b) => {
+        return new Date(b.upload_time).getTime() - new Date(a.upload_time).getTime();
+      })
+      .filter((a) => {
+        const searchTerm = search.toLowerCase();
+        return (
+          a.filename.toLowerCase().includes(searchTerm) ||
+          (a.transcript && a.transcript.toLowerCase().includes(searchTerm))
+        );
+      });
+  }, [audios, search]);
+
   return (
-    <div className="bg-white mt-10 p-6 rounded shadow w-[600px]">
-            <input
+    <div className="bg-white mt-10 p-6 rounded shadow w-[600px] mx-auto">
+      <input
         type="text"
-        placeholder="Search transcripts..."
+        placeholder="Search files or transcripts..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="border p-2 rounded w-full mb-4"
+        className="border p-2 rounded w-full mb-4 focus:ring-2 focus:ring-blue-500 outline-none"
       />
-      <h2 className="text-lg font-semibold mb-4">Upload History</h2>
+      
+      <h2 className="text-lg font-semibold mb-4 text-gray-700 border-b pb-2">Upload History</h2>
 
-      {filteredAudios.map((a) => (
-  <div key={a.id} className="border-b py-4">
-    {/* Top Row: Filename and Status */}
-    <div className="flex justify-between items-start">
-      <span className="font-medium text-gray-800">{a.filename}</span>
-          <p className="text-xs text-gray-400 mt-1">
-      Uploaded: {new Date(a.upload_time).toLocaleString()}
-    </p>
-      <span
-        className={`text-xs font-bold uppercase px-2 py-1 rounded ${
-          a.status === "completed"
-            ? "bg-green-100 text-green-600"
-            : "bg-orange-100 text-orange-500"
-        }`}
-      >
-        {a.status}
-      </span>
-    </div>
+      {filteredAudios.length === 0 ? (
+        <p className="text-gray-500 text-center py-4 text-sm">No recordings found.</p>
+      ) : (
+        filteredAudios.map((a) => (
+          <div key={a.id} className="border-b last:border-0 py-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <span className="font-medium text-gray-900 block">{a.filename}</span>
+                <span className="text-[10px] text-gray-400">
+                  {new Date(a.upload_time).toLocaleString()}
+                </span>
+              </div>
+              <span
+                className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                  a.status === "completed"
+                    ? "bg-green-100 text-green-700"
+                    : a.status === "processing"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {a.status}
+              </span>
+            </div>
 
-    {/* Bottom Row: Transcript (Full Width below filename) */}
-    {expandedId === a.id && a.transcript && (
-  <div className="bg-gray-50 p-3 rounded mt-2 text-sm text-gray-700">
-    <span className="font-semibold">Transcript:</span>
-    <p className="mt-1">{a.transcript}</p>
-  </div>
-)}
-<button
-  onClick={() =>
-    setExpandedId(expandedId === a.id ? null : a.id)
-  }
-  className="text-blue-600 text-sm mt-2"
->
-  {expandedId === a.id ? "Hide Transcript" : "Show Transcript"}
-</button>
-  </div>
-))}
+            {/* Content Section */}
+            {expandedId === a.id && a.transcript && (
+              <div className="bg-gray-50 p-3 rounded mt-2 text-sm text-gray-700 border-l-4 border-blue-400">
+                <p className="leading-relaxed">{a.transcript}</p>
+              </div>
+            )}
+
+            {/* Smart Button: Only show if transcript is ready */}
+            {a.status === "completed" && a.transcript && (
+              <button
+                onClick={() => setExpandedId(expandedId === a.id ? null : a.id)}
+                className="text-blue-600 hover:text-blue-800 text-xs font-semibold mt-2 transition-colors"
+              >
+                {expandedId === a.id ? "↑ Hide Transcript" : "↓ View Transcript"}
+              </button>
+            )}
+            
+            {a.status === "processing" && (
+              <p className="text-gray-400 text-[10px] mt-2 italic">Transcribing... please wait.</p>
+            )}
+          </div>
+        ))
+      )}
     </div>
   );
 }
