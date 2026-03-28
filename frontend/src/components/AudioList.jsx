@@ -93,6 +93,33 @@ function AudioList() {
                 {expandedId === a.id ? "↑ Hide Transcript" : "↓ View Transcript"}
               </button>
             )}
+            {a.summary && (
+        <div className="bg-blue-50 p-3 rounded mt-2 text-sm text-blue-800">
+          <span className="font-semibold">Summary:</span>
+          <p>{a.summary}</p>
+        </div>
+      )}
+          {a.action_items && (
+      <div className="bg-yellow-50 p-3 rounded mt-2 text-sm text-yellow-800">
+        <span className="font-semibold">Action Items:</span>
+        <p className="whitespace-pre-line mt-1">{a.action_items}</p>
+      </div>
+    )}
+    {a.sentiment && (
+  <div className="mt-2">
+    <span
+      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+        a.sentiment === "Positive"
+          ? "bg-green-100 text-green-700"
+          : a.sentiment === "Negative"
+          ? "bg-red-100 text-red-700"
+          : "bg-gray-100 text-gray-700"
+      }`}
+    >
+      {a.sentiment}
+    </span>
+  </div>
+)}
             
             {a.status === "processing" && (
               <p className="text-gray-400 text-[10px] mt-2 italic">Transcribing... please wait.</p>

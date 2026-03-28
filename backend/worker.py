@@ -29,6 +29,14 @@ Authentication and upload APIs were completed.
 Next tasks include integrating Whisper AI, transcript search, and dashboard improvements.
 Deadline for deployment discussion is next week.
 """
+    audio.summary = "Team discussed backend progress, authentication, upload APIs, and future AI integration."
+    audio.action_items = """
+- Integrate Whisper API
+- Improve dashboard UI
+- Add transcript search
+- Deploy backend next week
+"""
+    audio.sentiment = "Positive"
     audio.status = "completed"
 
     db.commit()
