@@ -23,7 +23,12 @@ def process_audio(audio_id):
     time.sleep(10)
 
     # ⭐ fake transcript
-    audio.transcript = f"Transcript of {audio.filename}"
+    audio.transcript = """
+Team discussed the project timeline and backend progress.
+Authentication and upload APIs were completed.
+Next tasks include integrating Whisper AI, transcript search, and dashboard improvements.
+Deadline for deployment discussion is next week.
+"""
     audio.status = "completed"
 
     db.commit()

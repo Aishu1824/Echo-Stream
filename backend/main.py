@@ -99,7 +99,9 @@ def list_audios(user=Depends(get_current_user)):
         "id": a.id,
         "filename": a.filename,
         "status": a.status,
-        "transcript": a.transcript
+        "transcript": a.transcript,
+        "upload_time": a.upload_time
     }
     for a in audios
+
 ]
