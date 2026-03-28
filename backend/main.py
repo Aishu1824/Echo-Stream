@@ -1,5 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException
 import shutil
+import os
+
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -12,6 +14,7 @@ from routes import auth
 from auth_utils import SECRET_KEY, ALGORITHM
 from worker import process_audio
 # create tables
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -24,7 +27,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # include auth routes
 app.include_router(auth.router)
 
@@ -54,7 +58,8 @@ async def upload_audio(
     user=Depends(get_current_user)
 ):
     # save file
-    with open(file.filename, "wb") as buffer:
+    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
     db = SessionLocal()
@@ -62,6 +67,7 @@ async def upload_audio(
     # create DB entry first
     new_audio = AudioFile(
         filename=file.filename,
+        filepath=file_path,
         status="processing"
     )
     db.add(new_audio)

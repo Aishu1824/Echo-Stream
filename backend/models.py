@@ -7,6 +7,7 @@ class AudioFile(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String)
+    filepath = Column(String, nullable=True)
     status = Column(String, default="uploaded")
     transcript = Column(String, nullable=True)
     upload_time = Column(DateTime, default=datetime.utcnow)
