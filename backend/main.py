@@ -27,8 +27,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-UPLOAD_FOLDER = "uploads"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 # include auth routes
 app.include_router(auth.router)
 
@@ -66,10 +69,10 @@ async def upload_audio(
 
     # create DB entry first
     new_audio = AudioFile(
-        filename=file.filename,
-        filepath=file_path,
-        status="processing"
-    )
+    filename=file.filename,
+    filepath=file_path,
+    status="processing"
+)
     db.add(new_audio)
     db.commit()
     db.refresh(new_audio)
