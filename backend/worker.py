@@ -6,14 +6,14 @@ from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lsa import LsaSummarizer
 from textblob import TextBlob
-
+from rag_utils import save_transcript_to_vector_db
 celery_app = Celery(
     "worker",
     broker="redis://localhost:6379/0"
 )
 
 print("Loading Whisper AI model...")
-model = whisper.load_model("base")
+model = whisper.load_model("tiny")
 
 @celery_app.task
 def process_audio(audio_id):
@@ -31,6 +31,7 @@ def process_audio(audio_id):
         result = model.transcribe(audio.filepath)
 
         audio.transcript = result["text"]
+        save_transcript_to_vector_db(audio.id, audio.transcript)
         parser = PlaintextParser.from_string(audio.transcript, Tokenizer("english"))
         summarizer = LsaSummarizer()
 

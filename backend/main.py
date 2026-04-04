@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from jose import jwt, JWTError
+from rag_utils import collection, embedding_model
 
 from database import engine, Base, SessionLocal
 from models import AudioFile
@@ -117,3 +118,17 @@ def list_audios(user=Depends(get_current_user)):
     for a in audios
 
 ]
+
+@app.post("/ask")
+def ask_question(question: str):
+    query_embedding = embedding_model.encode(question).tolist()
+
+    results = collection.query(
+        query_embeddings=[query_embedding],
+        n_results=3
+    )
+
+    return {
+        "question": question,
+        "matches": results["documents"][0]
+    }
