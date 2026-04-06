@@ -1,6 +1,6 @@
 import Upload from "./Upload";
 import AudioList from "./AudioList";
-
+import AskAI from "./AskAI";
 function Dashboard() {
   const logout = () => {
     localStorage.removeItem("token");
@@ -22,6 +22,7 @@ function Dashboard() {
 
       <div className="flex justify-center mt-20">
         <Upload />
+        <AskAI/>
         <AudioList/>
       </div>
 
