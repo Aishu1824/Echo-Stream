@@ -7,6 +7,7 @@ from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lsa import LsaSummarizer
 from textblob import TextBlob
 from rag_utils import save_transcript_to_vector_db
+
 celery_app = Celery(
     "worker",
     broker="redis://localhost:6379/0"

@@ -8,7 +8,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from jose import jwt, JWTError
 from rag_utils import collection, embedding_model
-
+from rag_utils import generate_answer
 from database import engine, Base, SessionLocal
 from models import AudioFile
 from routes import auth
@@ -128,7 +128,13 @@ def ask_question(question: str):
         n_results=3
     )
 
+    matches = results["documents"][0]
+    context = " ".join(matches)
+
+    answer = generate_answer(question, context)
+
     return {
         "question": question,
-        "matches": results["documents"][0]
+        "answer": answer,
+        "matches": matches
     }
