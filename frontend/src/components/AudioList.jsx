@@ -4,6 +4,7 @@ function AudioList() {
   const [audios, setAudios] = useState([]);
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState(null);
+  const [filter, setFilter] = useState("All");
 
   const fetchAudios = async () => {
     try {
@@ -31,7 +32,21 @@ function AudioList() {
   }, []);
 
   const filteredAudios = useMemo(() => {
-    return [...audios]
+    let filtered = [...audios];
+
+    if (filter === "Completed") {
+      filtered = filtered.filter((a) => a.status === "completed");
+    } else if (filter === "Processing") {
+      filtered = filtered.filter((a) => a.status === "processing");
+    } else if (filter === "Positive") {
+      filtered = filtered.filter((a) => a.sentiment === "Positive");
+    } else if (filter === "Neutral") {
+      filtered = filtered.filter((a) => a.sentiment === "Neutral");
+    } else if (filter === "Negative") {
+      filtered = filtered.filter((a) => a.sentiment === "Negative");
+    }
+
+    return filtered
       .sort((a, b) => {
         return (
           new Date(b.upload_time).getTime() -
@@ -48,10 +63,37 @@ function AudioList() {
           (a.summary && a.summary.toLowerCase().includes(searchTerm))
         );
       });
-  }, [audios, search]);
+  }, [audios, search, filter]);
 
   return (
-    <div className="bg-white mt-10 p-6 rounded-2xl shadow-lg border border-gray-200 w-[700px] mx-auto">
+    <div className="bg-white mt-10 p-6 rounded-2xl shadow-lg border border-gray-200 w-full mx-auto">
+      <h2 className="text-xl font-bold mb-5 text-gray-800 border-b pb-3">
+        Upload History
+      </h2>
+
+      <div className="flex flex-wrap gap-2 mb-4">
+        {[
+          "All",
+          "Completed",
+          "Processing",
+          "Positive",
+          "Neutral",
+          "Negative",
+        ].map((item) => (
+          <button
+            key={item}
+            onClick={() => setFilter(item)}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+              filter === item
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            {item}
+          </button>
+        ))}
+      </div>
+
       <input
         type="text"
         placeholder="Search files, transcripts, or summaries..."
@@ -59,10 +101,6 @@ function AudioList() {
         onChange={(e) => setSearch(e.target.value)}
         className="border border-gray-300 p-3 rounded-xl w-full mb-5 focus:ring-2 focus:ring-blue-500 outline-none"
       />
-
-      <h2 className="text-xl font-bold mb-5 text-gray-800 border-b pb-3">
-        Upload History
-      </h2>
 
       {filteredAudios.length === 0 ? (
         <div className="text-center py-10 text-gray-500">
