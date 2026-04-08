@@ -102,6 +102,7 @@ function Dashboard() {
     day,
     uploads: uploadsPerDay[day],
   }));
+  const userEmail = localStorage.getItem("email");
 
   return (
     <div
@@ -114,9 +115,14 @@ function Dashboard() {
           darkMode ? "bg-gray-800" : "bg-white"
         } shadow-md px-8 py-4 flex justify-between items-center transition-all duration-300`}
       >
-        <h1 className="text-2xl font-bold text-blue-700">
-          EchoStream AI
-        </h1>
+          <div>
+      <h1 className="text-2xl font-bold text-blue-700">
+        EchoStream AI
+      </h1>
+      <p className="text-sm text-gray-500">
+        Logged in as {userEmail}
+      </p>
+    </div>
 
         <div className="flex gap-3">
           <button

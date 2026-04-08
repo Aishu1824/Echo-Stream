@@ -169,9 +169,15 @@ function AudioList() {
             </div>
 
             {a.status === "processing" && (
-              <p className="text-yellow-600 text-xs mt-3 italic animate-pulse">
-                Processing audio and generating AI insights...
-              </p>
+              <div className="mt-3">
+  <p className="text-yellow-600 text-xs italic mb-2 animate-pulse">
+    Processing audio and generating AI insights...
+  </p>
+
+  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+    <div className="bg-yellow-500 h-2 rounded-full animate-pulse w-3/4"></div>
+  </div>
+</div>
             )}
 
             {a.status === "completed" && a.transcript && (

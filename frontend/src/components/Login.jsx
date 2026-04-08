@@ -12,8 +12,9 @@ function Login() {
     });
 
     const data = await res.json();
-
+    
     localStorage.setItem("token", data.access_token);
+    localStorage.setItem("email", email);
     window.location.href = "/";
   };
 
