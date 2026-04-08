@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
-
+import toast from "react-hot-toast";
+import jsPDF from "jspdf";
 function AudioList() {
   const [audios, setAudios] = useState([]);
   const [search, setSearch] = useState("");
@@ -64,6 +65,34 @@ function AudioList() {
         );
       });
   }, [audios, search, filter]);
+  const downloadPDF = (audio) => {
+  const doc = new jsPDF();
+
+  doc.setFontSize(18);
+  doc.text("EchoStream AI Meeting Report", 20, 20);
+
+  doc.setFontSize(12);
+  doc.text(`File: ${audio.filename}`, 20, 35);
+  doc.text(`Status: ${audio.status}`, 20, 45);
+  doc.text(`Sentiment: ${audio.sentiment || "N/A"}`, 20, 55);
+
+  doc.text("Summary:", 20, 70);
+  doc.text(audio.summary || "No summary available", 20, 80, {
+    maxWidth: 170,
+  });
+
+  doc.text("Action Items:", 20, 120);
+  doc.text(audio.action_items || "No action items available", 20, 130, {
+    maxWidth: 170,
+  });
+
+  doc.text("Transcript:", 20, 170);
+  doc.text(audio.transcript || "No transcript available", 20, 180, {
+    maxWidth: 170,
+  });
+
+  doc.save(`${audio.filename}.pdf`);
+};
 
   return (
     <div className="bg-white mt-10 p-6 rounded-2xl shadow-lg border border-gray-200 w-full mx-auto">
@@ -199,8 +228,15 @@ function AudioList() {
                 >
                   {a.sentiment}
                 </span>
+                     
               </div>
             )}
+                <button
+            onClick={() => downloadPDF(a)}
+            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition"
+          >
+            Download Report PDF
+          </button>
           </div>
         ))
       )}

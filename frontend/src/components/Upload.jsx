@@ -1,19 +1,19 @@
 import { useState } from "react";
-
+import toast from "react-hot-toast";
 function Upload() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
   const handleUpload = async () => {
     if (!file) {
-      alert("Please select a file first");
+      toast.error("Please select a file first");
       return;
     }
 
     const token = localStorage.getItem("token");
 
     if (!token) {
-      alert("You are not logged in!");
+      toast.error("You are not logged in!");
       return;
     }
 
@@ -33,11 +33,11 @@ function Upload() {
 
       const data = await response.json();
 
-      alert("Upload success. Audio ID: " + data.audio_id);
+      toast.success("Upload success. Audio ID: " + data.audio_id);
 
     } catch (err) {
       console.error(err);
-      alert("Upload failed");
+      toast.error("Upload failed");
     }
 
     setUploading(false);

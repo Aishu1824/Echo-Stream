@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import toast from "react-hot-toast";
 function Register() {
   const [email,setEmail] = useState("");
   const [password,setPassword] = useState("");
@@ -13,7 +13,7 @@ function Register() {
 
     const data = await res.json();
 
-    alert("Account created. Please login.");
+    toast.error("Account created. Please login.");
     window.location.href = "/login";
   };
 
