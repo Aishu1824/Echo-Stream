@@ -1,6 +1,6 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
-function Upload() {
+function Upload({ darkMode }) {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
@@ -44,8 +44,13 @@ function Upload() {
   };
 
   return (
-    <div className="bg-white p-10 rounded-xl shadow-lg w-96 text-center">
-      <h2 className="text-xl font-semibold mb-6">Upload Audio</h2>
+<div
+  className={`${
+    darkMode
+      ? "bg-gray-800 text-white border-gray-700"
+      : "bg-white text-black border-gray-200"
+  } p-6 rounded-2xl shadow border`}
+>      <h2 className="text-xl font-semibold mb-6">Upload Audio</h2>
 
       <input
         type="file"

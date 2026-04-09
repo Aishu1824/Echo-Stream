@@ -23,9 +23,10 @@ function Dashboard() {
   const [darkMode, setDarkMode] = useState(false);
 
   const logout = () => {
-    localStorage.removeItem("token");
-    window.location.reload();
-  };
+  localStorage.removeItem("token");
+  localStorage.removeItem("email");
+  window.location.reload();
+};
 
   const fetchAudios = async () => {
     try {
@@ -119,8 +120,8 @@ function Dashboard() {
       <h1 className="text-2xl font-bold text-blue-700">
         EchoStream AI
       </h1>
-      <p className="text-sm text-gray-500">
-        Logged in as {userEmail}
+      <p className={`${darkMode ? "text-gray-300" : "text-gray-500"} text-sm`}>
+        Logged in as {userEmail || "User"}
       </p>
     </div>
 
@@ -284,15 +285,15 @@ function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           <div className="lg:col-span-1">
-            <Upload />
+            <Upload darkMode={darkMode}/>
           </div>
 
           <div className="lg:col-span-2">
-            <AskAI />
+            <AskAI darkMode={darkMode}/>
           </div>
 
           <div className="lg:col-span-3">
-            <AudioList />
+            <AudioList darkMode={darkMode}/>
           </div>
         </div>
       </div>

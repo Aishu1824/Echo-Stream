@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import toast from "react-hot-toast";
 import jsPDF from "jspdf";
-function AudioList() {
+function AudioList({ darkMode }) {
   const [audios, setAudios] = useState([]);
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState(null);
@@ -95,8 +95,14 @@ function AudioList() {
 };
 
   return (
-    <div className="bg-white mt-10 p-6 rounded-2xl shadow-lg border border-gray-200 w-full mx-auto">
-      <h2 className="text-xl font-bold mb-5 text-gray-800 border-b pb-3">
+<div
+  className={`${
+    darkMode
+      ? "bg-gray-800 text-white border-gray-700"
+      : "bg-white text-black border-gray-200"
+  } mt-10 p-6 rounded-2xl shadow-lg border w-full mx-auto`}
+>      
+<h2 className="text-xl font-bold mb-5 text-gray-800 border-b pb-3">
         Upload History
       </h2>
 
@@ -128,8 +134,11 @@ function AudioList() {
         placeholder="Search files, transcripts, or summaries..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="border border-gray-300 p-3 rounded-xl w-full mb-5 focus:ring-2 focus:ring-blue-500 outline-none"
-      />
+className={`${
+  darkMode
+    ? "bg-gray-700 text-white border-gray-600 placeholder-gray-400"
+    : "bg-white text-black border-gray-300"
+} border p-3 rounded-xl w-full mb-5 focus:ring-2 focus:ring-blue-500 outline-none`}      />
 
       {filteredAudios.length === 0 ? (
         <div className="text-center py-10 text-gray-500">
@@ -142,8 +151,11 @@ function AudioList() {
         filteredAudios.map((a) => (
           <div
             key={a.id}
-            className="bg-gray-50 rounded-xl p-5 mb-4 border border-gray-100 hover:shadow-md transition"
-          >
+className={`${
+  darkMode
+    ? "bg-gray-700 border-gray-600 text-white"
+    : "bg-gray-50 border-gray-100 text-black"
+} rounded-xl p-5 mb-4 border hover:shadow-md transition`}          >
             <div className="flex justify-between items-start gap-4">
               <div className="flex-1">
                 <span className="font-medium text-gray-900 block truncate max-w-[400px]">

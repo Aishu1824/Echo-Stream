@@ -1,5 +1,5 @@
 import { useState } from "react";
-function AskAI() {
+function AskAI({ darkMode }) {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [matches, setMatches] = useState([]);
@@ -19,8 +19,13 @@ function AskAI() {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 mt-6">
-      <h2 className="text-xl font-semibold mb-4">Ask AI About Your Meetings</h2>
+<div
+  className={`${
+    darkMode
+      ? "bg-gray-800 text-white border-gray-700"
+      : "bg-white text-black border-gray-200"
+  } p-6 rounded-2xl shadow border`}
+>      <h2 className="text-xl font-semibold mb-4">Ask AI About Your Meetings</h2>
 
       <input
         type="text"
