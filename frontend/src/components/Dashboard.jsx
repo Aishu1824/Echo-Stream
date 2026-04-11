@@ -23,32 +23,52 @@ function Dashboard() {
   const [darkMode, setDarkMode] = useState(false);
 
   const logout = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("email");
-  window.location.reload();
-};
+    localStorage.removeItem("token");
+    localStorage.removeItem("email");
+    toast.success("Logged out successfully");
 
-  const fetchAudios = async () => {
-    try {
-      const token = localStorage.getItem("token");
-
-      const res = await fetch("http://127.0.0.1:8000/audios", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-      setAudios(data);
-    } catch (error) {
-      console.error("Failed to fetch audios:", error);
-    }
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   };
 
+  const fetchAudios = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("http://127.0.0.1:8000/audios", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json();
+
+    setAudios((prevAudios) => {
+      const oldData = JSON.stringify(prevAudios);
+      const newData = JSON.stringify(data);
+
+      if (oldData !== newData) {
+        return data;
+      }
+
+      return prevAudios;
+    });
+  } catch (error) {
+    console.error("Failed to fetch audios:", error);
+  }
+};
   useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      window.location.href = "/login";
+      return;
+    }
+
     fetchAudios();
 
-    const interval = setInterval(fetchAudios, 3000);
+    const interval = setInterval(fetchAudios, 10000);
 
     return () => clearInterval(interval);
   }, []);
@@ -103,6 +123,7 @@ function Dashboard() {
     day,
     uploads: uploadsPerDay[day],
   }));
+
   const userEmail = localStorage.getItem("email");
 
   return (
@@ -113,22 +134,27 @@ function Dashboard() {
     >
       <div
         className={`${
-          darkMode ? "bg-gray-800" : "bg-white"
-        } shadow-md px-8 py-4 flex justify-between items-center transition-all duration-300`}
+          darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+        } shadow-md px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4 border-b transition-all duration-300`}
       >
-          <div>
-      <h1 className="text-2xl font-bold text-blue-700">
-        EchoStream AI
-      </h1>
-      <p className={`${darkMode ? "text-gray-300" : "text-gray-500"} text-sm`}>
-        Logged in as {userEmail || "User"}
-      </p>
-    </div>
+        <div>
+          <h1 className="text-3xl font-bold text-blue-600">
+            EchoStream AI
+          </h1>
 
-        <div className="flex gap-3">
+          <p
+            className={`text-sm mt-1 ${
+              darkMode ? "text-gray-300" : "text-gray-500"
+            }`}
+          >
+            Logged in as {userEmail || "User"}
+          </p>
+        </div>
+
+        <div className="flex gap-3 flex-wrap">
           <button
             onClick={() => setDarkMode(!darkMode)}
-            className={`px-4 py-2 rounded-lg text-sm transition ${
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
               darkMode
                 ? "bg-gray-700 text-white hover:bg-gray-600"
                 : "bg-gray-200 text-gray-800 hover:bg-gray-300"
@@ -139,7 +165,7 @@ function Dashboard() {
 
           <button
             onClick={logout}
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition"
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl transition font-medium"
           >
             Logout
           </button>
@@ -156,7 +182,7 @@ function Dashboard() {
             } p-5 rounded-2xl shadow border`}
           >
             <p className="text-gray-500 text-sm">Total Uploads</p>
-            <h2 className="text-3xl font-bold">{totalUploads}</h2>
+            <h2 className="text-3xl font-bold mt-2">{totalUploads}</h2>
           </div>
 
           <div
@@ -167,7 +193,7 @@ function Dashboard() {
             } p-5 rounded-2xl shadow border`}
           >
             <p className="text-gray-500 text-sm">Completed</p>
-            <h2 className="text-3xl font-bold text-green-600">
+            <h2 className="text-3xl font-bold text-green-500 mt-2">
               {completedCount}
             </h2>
           </div>
@@ -180,7 +206,7 @@ function Dashboard() {
             } p-5 rounded-2xl shadow border`}
           >
             <p className="text-gray-500 text-sm">Processing</p>
-            <h2 className="text-3xl font-bold text-yellow-500">
+            <h2 className="text-3xl font-bold text-yellow-500 mt-2">
               {processingCount}
             </h2>
           </div>
@@ -193,13 +219,13 @@ function Dashboard() {
             } p-5 rounded-2xl shadow border`}
           >
             <p className="text-gray-500 text-sm">Positive Meetings</p>
-            <h2 className="text-3xl font-bold text-blue-600">
+            <h2 className="text-3xl font-bold text-blue-500 mt-2">
               {positiveCount}
             </h2>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
           <div
             className={`${
               darkMode
@@ -283,17 +309,17 @@ function Dashboard() {
           </ResponsiveContainer>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          <div className="lg:col-span-1">
-            <Upload darkMode={darkMode}/>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+          <div className="xl:col-span-1">
+            <Upload darkMode={darkMode} />
           </div>
 
-          <div className="lg:col-span-2">
-            <AskAI darkMode={darkMode}/>
+          <div className="xl:col-span-2">
+            <AskAI darkMode={darkMode} />
           </div>
 
-          <div className="lg:col-span-3">
-            <AudioList darkMode={darkMode}/>
+          <div className="xl:col-span-3">
+            <AudioList darkMode={darkMode} />
           </div>
         </div>
       </div>
