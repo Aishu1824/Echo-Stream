@@ -3,7 +3,11 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import User
 from schemas import UserCreate, UserLogin
-from auth_utils import create_access_token
+from auth_utils import (
+    create_access_token,
+    hash_password,
+    verify_password
+)
 
 router = APIRouter()
 
@@ -28,7 +32,7 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
 
     new_user = User(
         email=user.email,
-        password=user.password
+        password=hash_password(user.password)
     )
 
     db.add(new_user)
@@ -52,7 +56,7 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
             detail="User not found"
         )
 
-    if db_user.password != user.password:
+    if not verify_password(user.password, db_user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid password"

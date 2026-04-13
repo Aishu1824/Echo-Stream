@@ -125,10 +125,11 @@ async def upload_audio(
         shutil.copyfileobj(file.file, buffer)
 
     new_audio = AudioFile(
-        filename=safe_filename,
-        filepath=str(file_path),
-        status="processing"
-    )
+    filename=safe_filename,
+    filepath=str(file_path),
+    status="processing",
+    user_email=user
+)
 
     db.add(new_audio)
     db.commit()
@@ -177,7 +178,9 @@ def list_audios(
     user: str = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    audios = db.query(AudioFile).order_by(AudioFile.upload_time.desc()).all()
+    audios = db.query(AudioFile).filter(
+        AudioFile.user_email == user
+    ).order_by(AudioFile.upload_time.desc()).all()
 
     return [
         {
@@ -202,7 +205,10 @@ def delete_audio(
     user: str = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    audio = db.query(AudioFile).filter(AudioFile.id == audio_id).first()
+    audio = db.query(AudioFile).filter(
+    AudioFile.id == audio_id,
+    AudioFile.user_email == user
+).first()
 
     if not audio:
         raise HTTPException(status_code=404, detail="Audio not found")
@@ -231,9 +237,10 @@ def ask_question(
     query_embedding = embedding_model.encode(question).tolist()
 
     results = collection.query(
-        query_embeddings=[query_embedding],
-        n_results=3
-    )
+    query_embeddings=[query_embedding],
+    n_results=5,
+    where={"user_email": user}
+)
 
     matches = results["documents"][0] if results["documents"] else []
 

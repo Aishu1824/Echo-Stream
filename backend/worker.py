@@ -45,7 +45,11 @@ def process_audio(audio_id):
         # -------------------- SAVE TO VECTOR DATABASE --------------------
 
         if transcript:
-            save_transcript_to_vector_db(audio.id, transcript)
+            save_transcript_to_vector_db(
+    audio.id,
+    audio.transcript,
+    audio.user_email
+)
 
         # -------------------- SUMMARY GENERATION --------------------
 

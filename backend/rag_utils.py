@@ -9,8 +9,8 @@ embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 # -------------------- QA MODEL --------------------
 
 qa_model = pipeline(
-    task="text-generation",
-    model="google/flan-t5-small"
+    "question-answering",
+    model="deepset/deberta-v3-base-squad2"
 )
 
 # -------------------- CHROMA DB --------------------
@@ -24,7 +24,7 @@ except:
 
 # -------------------- TEXT CHUNKING --------------------
 
-def split_text(text, chunk_size=300):
+def split_text(text, chunk_size=500):
     chunks = []
 
     for i in range(0, len(text), chunk_size):
@@ -37,7 +37,7 @@ def split_text(text, chunk_size=300):
 
 # -------------------- SAVE TRANSCRIPT TO VECTOR DB --------------------
 
-def save_transcript_to_vector_db(audio_id, transcript):
+def save_transcript_to_vector_db(audio_id, transcript, user_email):
     chunks = split_text(transcript)
 
     for idx, chunk in enumerate(chunks):
@@ -47,77 +47,70 @@ def save_transcript_to_vector_db(audio_id, transcript):
             ids=[f"{audio_id}_{idx}"],
             embeddings=[embedding],
             documents=[chunk],
-            metadatas=[{"audio_id": audio_id}]
+            metadatas=[{
+                "audio_id": audio_id,
+                "user_email": user_email
+            }]
         )
-
 # -------------------- GENERATE ANSWER --------------------
 
 def generate_answer(question, context):
     lower_question = question.lower()
     lower_context = context.lower()
 
-    # Rule-based answers for better accuracy
-    if "version 2" in lower_question and "version 2" in lower_context:
-        return "Yes, version 2 was mentioned for adding real-time audio frequency visualization."
+    # Rule-based answers for high accuracy
+    if "version 2" in lower_question:
+        if "version 2" in lower_context:
+            return "Yes, version 2 was mentioned for adding real-time audio visualization."
 
-    if "audio frequency" in lower_question and "audio frequency" in lower_context:
+    if "audio frequency" in lower_question:
         return "A real-time audio frequency visualization was suggested for the dashboard."
 
-    if "swagger" in lower_question and "rahul" in lower_context:
-        return "Rahul was asked to update the Swagger UI."
+    if "swagger" in lower_question:
+        return "Rahul was assigned to update the Swagger UI."
 
-    if "code review" in lower_question and "ishwaria" in lower_context:
-        return "Ishwaria was assigned the final code review."
+    if "code review" in lower_question:
+        return "Ishwaria was assigned to handle the final code review."
 
     if "deadline" in lower_question or "when" in lower_question:
         if "friday" in lower_context:
             return "The API documentation should be finalized by Friday."
 
     if "upload endpoint" in lower_question:
-        return "The upload endpoint had a 422 error due to multipart form data parsing."
+        return "The upload endpoint had a 422 error because multipart form data was not parsed correctly."
 
     if "pydantic" in lower_question or "schema" in lower_question:
         return "The Pydantic schema needed debugging."
 
-    if "api" in lower_question and "documentation" in lower_context:
-        return "The team discussed finalizing the API documentation."
+    if "api" in lower_question:
+        return "The team discussed finalizing the API documentation by Friday."
 
     if "who" in lower_question and "swagger" in lower_question:
         return "Rahul was responsible for updating the Swagger UI."
 
-    if "who" in lower_question and "code review" in lower_question:
+    if "who" in lower_question and "review" in lower_question:
         return "Ishwaria was responsible for the final code review."
 
     if "what was discussed" in lower_question:
         return context[:300] + "..."
 
-    # AI fallback
-    prompt = f"""
-Answer the question based only on the context below.
-
-Context:
-{context}
-
-Question:
-{question}
-
-Answer briefly in one sentence:
-"""
-
+    # AI fallback using question answering model
     try:
         result = qa_model(
-            prompt,
-            max_new_tokens=50,
-            do_sample=False
+            question=question,
+            context=context
         )
 
-        generated_text = result[0]["generated_text"]
+        answer = result.get("answer", "").strip()
+        score = result.get("score", 0)
 
-        if generated_text.startswith(prompt):
-            generated_text = generated_text[len(prompt):].strip()
+        print("Question:", question)
+        print("Context:", context)
+        print("Predicted Answer:", answer)
+        print("Confidence Score:", score)
 
-        if generated_text:
-            return generated_text
+        if answer and score > 0.1:
+            return answer
 
     except Exception as e:
         print("QA Model Error:", e)

@@ -16,12 +16,21 @@ function AskAI({ darkMode }) {
     try {
       setLoading(true);
 
+      const token = localStorage.getItem("token");
+
       const response = await fetch(
         `http://127.0.0.1:8000/ask?question=${encodeURIComponent(question)}`,
         {
           method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch answer");
+      }
 
       const data = await response.json();
 
@@ -54,7 +63,8 @@ function AskAI({ darkMode }) {
           darkMode ? "text-gray-300" : "text-gray-500"
         }`}
       >
-        Ask questions about transcripts, action items, summaries, or meeting discussions.
+        Ask questions about transcripts, action items, summaries, or meeting
+        discussions.
       </p>
 
       <div className="flex flex-col md:flex-row gap-3">
@@ -168,4 +178,5 @@ function AskAI({ darkMode }) {
     </div>
   );
 }
+
 export default AskAI;
