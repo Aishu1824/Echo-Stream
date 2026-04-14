@@ -238,11 +238,14 @@ def ask_question(
 
     results = collection.query(
     query_embeddings=[query_embedding],
-    n_results=5,
+    n_results=10,
     where={"user_email": user}
 )
 
     matches = results["documents"][0] if results["documents"] else []
+    print("Question:", question)
+    print("Results:", results)
+    print("Matches:", matches)
 
     if not matches:
         return {

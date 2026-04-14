@@ -15,16 +15,17 @@ qa_model = pipeline(
 
 # -------------------- CHROMA DB --------------------
 
-client = chromadb.PersistentClient(path="./chroma_db")
-
+client = chromadb.PersistentClient(path="./new_chroma_db")
 try:
-    collection = client.get_collection(name="transcripts")
-except:
-    collection = client.create_collection(name="transcripts")
-
+    collection = client.get_collection("transcripts")
+except Exception:
+    try:
+        collection = client.create_collection("transcripts")
+    except Exception:
+        collection = client.get_collection("transcripts")
 # -------------------- TEXT CHUNKING --------------------
 
-def split_text(text, chunk_size=500):
+def split_text(text, chunk_size=200):
     chunks = []
 
     for i in range(0, len(text), chunk_size):
