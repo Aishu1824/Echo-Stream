@@ -2,6 +2,8 @@ from celery import Celery
 from database import SessionLocal
 from models import AudioFile
 import whisper
+import os
+from dotenv import load_dotenv
 from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lsa import LsaSummarizer
@@ -9,10 +11,12 @@ from textblob import TextBlob
 from rag_utils import save_transcript_to_vector_db
 
 # -------------------- CELERY CONFIG --------------------
+load_dotenv()
 
+broker_url = os.getenv("REDIS_URL")
 celery_app = Celery(
     "worker",
-    broker="redis://localhost:6379/0"
+    broker=broker_url
 )
 
 # -------------------- LOAD WHISPER MODEL --------------------
