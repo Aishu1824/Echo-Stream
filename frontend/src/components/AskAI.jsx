@@ -19,7 +19,7 @@ function AskAI({ darkMode }) {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        `http://127.0.0.1:8000/ask?question=${encodeURIComponent(question)}`,
+        `${import.meta.env.VITE_API_BASE_URL}/ask?question=${encodeURIComponent(question)}`,
         {
           method: "POST",
           headers: {
