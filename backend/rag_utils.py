@@ -4,13 +4,12 @@ from transformers import pipeline
 
 # -------------------- EMBEDDING MODEL --------------------
 
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-
+embedding_model = SentenceTransformer("paraphrase-MiniLM-L3-v2")
 # -------------------- QA MODEL --------------------
 
 qa_model = pipeline(
     "question-answering",
-    model="deepset/deberta-v3-base-squad2"
+    model="distilbert-base-cased-distilled-squad"
 )
 
 # -------------------- CHROMA DB --------------------
