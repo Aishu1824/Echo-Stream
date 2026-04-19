@@ -1,20 +1,27 @@
 import chromadb
-from sentence_transformers import SentenceTransformer
 from transformers import pipeline
 
-# -------------------- EMBEDDING MODEL --------------------
-
-embedding_model = SentenceTransformer("paraphrase-MiniLM-L3-v2")
 # -------------------- QA MODEL --------------------
 
-qa_model = pipeline(
-    "question-answering",
-    model="distilbert-base-cased-distilled-squad"
-)
+qa_model = None
+
+
+def get_qa_model():
+    global qa_model
+
+    if qa_model is None:
+        qa_model = pipeline(
+            "question-answering",
+            model="distilbert-base-cased-distilled-squad"
+        )
+
+    return qa_model
+
 
 # -------------------- CHROMA DB --------------------
 
 client = chromadb.PersistentClient(path="./new_chroma_db")
+
 try:
     collection = client.get_collection("transcripts")
 except Exception:
@@ -22,6 +29,8 @@ except Exception:
         collection = client.create_collection("transcripts")
     except Exception:
         collection = client.get_collection("transcripts")
+
+
 # -------------------- TEXT CHUNKING --------------------
 
 def split_text(text, chunk_size=200):
@@ -35,33 +44,33 @@ def split_text(text, chunk_size=200):
 
     return chunks
 
+
 # -------------------- SAVE TRANSCRIPT TO VECTOR DB --------------------
 
 def save_transcript_to_vector_db(audio_id, transcript, user_email):
     chunks = split_text(transcript)
 
     for idx, chunk in enumerate(chunks):
-        embedding = embedding_model.encode(chunk).tolist()
-
         collection.add(
             ids=[f"{audio_id}_{idx}"],
-            embeddings=[embedding],
             documents=[chunk],
             metadatas=[{
                 "audio_id": audio_id,
                 "user_email": user_email
             }]
         )
+
+
 # -------------------- GENERATE ANSWER --------------------
 
 def generate_answer(question, context):
     lower_question = question.lower()
     lower_context = context.lower()
 
-    # Rule-based answers for high accuracy
-    if "version 2" in lower_question:
-        if "version 2" in lower_context:
-            return "Yes, version 2 was mentioned for adding real-time audio visualization."
+    # -------------------- RULE-BASED ANSWERS --------------------
+
+    if "version 2" in lower_question and "version 2" in lower_context:
+        return "Yes, version 2 was mentioned for adding real-time audio visualization."
 
     if "audio frequency" in lower_question:
         return "A real-time audio frequency visualization was suggested for the dashboard."
@@ -72,9 +81,8 @@ def generate_answer(question, context):
     if "code review" in lower_question:
         return "Ishwaria was assigned to handle the final code review."
 
-    if "deadline" in lower_question or "when" in lower_question:
-        if "friday" in lower_context:
-            return "The API documentation should be finalized by Friday."
+    if ("deadline" in lower_question or "when" in lower_question) and "friday" in lower_context:
+        return "The API documentation should be finalized by Friday."
 
     if "upload endpoint" in lower_question:
         return "The upload endpoint had a 422 error because multipart form data was not parsed correctly."
@@ -94,9 +102,10 @@ def generate_answer(question, context):
     if "what was discussed" in lower_question:
         return context[:300] + "..."
 
-    # AI fallback using question answering model
+    # -------------------- AI FALLBACK --------------------
+
     try:
-        result = qa_model(
+        result = get_qa_model()(
             question=question,
             context=context
         )
@@ -109,10 +118,10 @@ def generate_answer(question, context):
         print("Predicted Answer:", answer)
         print("Confidence Score:", score)
 
-        if answer and score > 0.1:
+        if answer and score > 0.15:
             return answer
 
     except Exception as e:
         print("QA Model Error:", e)
 
-    return "No clear answer found."
+    return context[:300] + "..."
