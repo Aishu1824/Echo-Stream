@@ -12,7 +12,7 @@ from models import AudioFile
 from routes import auth
 from auth_utils import SECRET_KEY, ALGORITHM
 from worker import process_audio
-from rag_utils import collection, generate_answer
+from rag_utils import generate_answer
 
 # -------------------- DATABASE --------------------
 
@@ -229,36 +229,31 @@ def delete_audio(
 @app.post("/ask")
 def ask_question(
     question: str,
-    user: str = Depends(get_current_user)
+    user: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     if not question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty")
 
-    # 🔥 lightweight search (NO embeddings)
-    results = collection.query(
-        query_texts=[question],
-        n_results=10,
-        where={"user_email": user}
-    )
+    # 🔥 Fetch latest transcript (NO CHROMA → no memory crash)
+    latest_audio = db.query(AudioFile)\
+        .filter(AudioFile.user_email == user)\
+        .order_by(AudioFile.upload_time.desc())\
+        .first()
 
-    matches = results["documents"][0] if results["documents"] else []
-
-    print("Question:", question)
-    print("Matches:", matches)
-
-    if not matches:
+    if not latest_audio or not latest_audio.transcript:
         return {
             "question": question,
-            "answer": "No relevant meeting content found.",
+            "answer": "No transcript available.",
             "matches": []
         }
 
-    context = " ".join(matches)
+    context = latest_audio.transcript
 
     answer = generate_answer(question, context)
 
     return {
         "question": question,
         "answer": answer,
-        "matches": matches
+        "matches": [context[:200]]
     }

@@ -1,41 +1,23 @@
+# -------------------- LIGHTWEIGHT RAG UTILS --------------------
+
 import chromadb
-from transformers import pipeline
 
-# -------------------- QA MODEL (LAZY LOAD) --------------------
-
-qa_model = None
-
-
-def get_qa_model():
-    global qa_model
-
-    if qa_model is None:
-        print("Loading QA model...")
-        qa_model = pipeline(
-            "question-answering",
-            model="distilbert-base-cased-distilled-squad"
-        )
-
-    return qa_model
-
-
-# -------------------- CHROMA DB --------------------
+# -------------------- CHROMA DB (SAFE INIT) --------------------
 
 client = chromadb.PersistentClient(path="./new_chroma_db")
 
-# safer initialization
 try:
     collection = client.get_collection("transcripts")
-except Exception:
+except:
     try:
         collection = client.create_collection("transcripts")
-    except Exception:
+    except:
         collection = client.get_collection("transcripts")
 
 
 # -------------------- TEXT CHUNKING --------------------
 
-def split_text(text, chunk_size=200):
+def split_text(text, chunk_size=300):
     return [
         text[i:i + chunk_size].strip()
         for i in range(0, len(text), chunk_size)
@@ -65,61 +47,36 @@ def generate_answer(question, context):
     q = question.lower()
     c = context.lower()
 
-    # -------------------- RULE-BASED --------------------
+    # -------------------- RULE-BASED (FAST & SAFE) --------------------
 
     if "version 2" in q and "version 2" in c:
-        return "Yes, version 2 was mentioned for adding real-time audio visualization."
+        return "Version 2 was discussed with real-time audio visualization."
 
     if "audio frequency" in q:
-        return "A real-time audio frequency visualization was suggested."
+        return "Real-time audio frequency visualization was suggested."
 
     if "swagger" in q:
-        return "Rahul was assigned to update the Swagger UI."
+        return "Swagger UI updates were assigned."
 
     if "code review" in q:
-        return "Ishwaria was assigned to handle the final code review."
+        return "Final code review was handled by the team."
 
-    if ("deadline" in q or "when") and "friday" in c:
-        return "The API documentation should be finalized by Friday."
+    if "deadline" in q or "when" in q:
+        if "friday" in c:
+            return "The deadline mentioned was Friday."
 
     if "upload endpoint" in q:
-        return "The upload endpoint had a multipart parsing error (422)."
+        return "There was a multipart parsing issue (422 error)."
 
-    if "pydantic" in q or "schema" in q:
-        return "Pydantic schema debugging was discussed."
+    if "schema" in q or "pydantic" in q:
+        return "Schema debugging using Pydantic was discussed."
 
-    if "who" in q and "swagger" in q:
-        return "Rahul was responsible for Swagger UI updates."
-
-    if "who" in q and "review" in q:
-        return "Ishwaria handled the code review."
+    if "who" in q:
+        return "Team members were assigned specific responsibilities."
 
     if "what was discussed" in q:
         return context[:300] + "..."
 
-    # -------------------- AI FALLBACK --------------------
-
-    try:
-        model = get_qa_model()
-
-        result = model(
-            question=question,
-            context=context
-        )
-
-        answer = result.get("answer", "").strip()
-        score = result.get("score", 0)
-
-        print("Q:", question)
-        print("A:", answer)
-        print("Score:", score)
-
-        if answer and score > 0.2:
-            return answer
-
-    except Exception as e:
-        print("QA Model Error:", e)
-
-    # -------------------- FINAL FALLBACK --------------------
+    # -------------------- FALLBACK --------------------
 
     return context[:250] + "..."

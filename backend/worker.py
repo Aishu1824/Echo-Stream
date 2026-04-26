@@ -2,6 +2,7 @@ from celery import Celery
 from database import SessionLocal
 from models import AudioFile
 import os
+import ssl
 from dotenv import load_dotenv
 from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
@@ -9,7 +10,7 @@ from sumy.summarizers.lsa import LsaSummarizer
 from textblob import TextBlob
 from rag_utils import save_transcript_to_vector_db
 
-# -------------------- CELERY CONFIG --------------------
+# -------------------- CONFIG --------------------
 
 load_dotenv()
 
@@ -20,7 +21,28 @@ celery_app = Celery(
     broker=broker_url
 )
 
-# -------------------- PROCESS AUDIO TASK --------------------
+# ✅ Fix Upstash SSL warning
+celery_app.conf.broker_use_ssl = {
+    "ssl_cert_reqs": ssl.CERT_NONE
+}
+
+# -------------------- WHISPER MODEL (LOAD ONCE PER WORKER) --------------------
+
+whisper_model = None
+
+
+def get_whisper_model():
+    global whisper_model
+
+    if whisper_model is None:
+        import whisper
+        print("Loading Whisper model...")
+        whisper_model = whisper.load_model("tiny")
+
+    return whisper_model
+
+
+# -------------------- TASK --------------------
 
 @celery_app.task
 def process_audio(audio_id):
@@ -35,10 +57,8 @@ def process_audio(audio_id):
 
         print("Processing:", audio.filepath)
 
-        # -------------------- LOAD WHISPER (LAZY LOAD) --------------------
-        import whisper
-        print("Loading Whisper model...")
-        model = whisper.load_model("tiny")
+        # ✅ Load model once
+        model = get_whisper_model()
 
         # -------------------- TRANSCRIPTION --------------------
 
@@ -47,7 +67,7 @@ def process_audio(audio_id):
 
         audio.transcript = transcript
 
-        # -------------------- SAVE TO VECTOR DATABASE --------------------
+        # -------------------- SAVE --------------------
 
         if transcript:
             save_transcript_to_vector_db(
