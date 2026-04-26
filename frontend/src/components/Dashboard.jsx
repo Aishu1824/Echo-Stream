@@ -36,7 +36,7 @@ function Dashboard() {
   try {
     const token = localStorage.getItem("token");
 
-    const res = await fetch("${import.meta.env.VITE_API_BASE_URL}/audios", {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/audios`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

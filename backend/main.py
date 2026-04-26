@@ -12,7 +12,7 @@ from models import AudioFile
 from routes import auth
 from auth_utils import SECRET_KEY, ALGORITHM
 from worker import process_audio
-from rag_utils import collection, embedding_model, generate_answer
+from rag_utils import collection, generate_answer
 
 # -------------------- DATABASE --------------------
 
@@ -125,11 +125,11 @@ async def upload_audio(
         shutil.copyfileobj(file.file, buffer)
 
     new_audio = AudioFile(
-    filename=safe_filename,
-    filepath=str(file_path),
-    status="processing",
-    user_email=user
-)
+        filename=safe_filename,
+        filepath=str(file_path),
+        status="processing",
+        user_email=user
+    )
 
     db.add(new_audio)
     db.commit()
@@ -206,9 +206,9 @@ def delete_audio(
     db: Session = Depends(get_db)
 ):
     audio = db.query(AudioFile).filter(
-    AudioFile.id == audio_id,
-    AudioFile.user_email == user
-).first()
+        AudioFile.id == audio_id,
+        AudioFile.user_email == user
+    ).first()
 
     if not audio:
         raise HTTPException(status_code=404, detail="Audio not found")
@@ -234,17 +234,16 @@ def ask_question(
     if not question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty")
 
-    query_embedding = embedding_model.encode(question).tolist()
-
+    # 🔥 lightweight search (NO embeddings)
     results = collection.query(
-    query_embeddings=[query_embedding],
-    n_results=10,
-    where={"user_email": user}
-)
+        query_texts=[question],
+        n_results=10,
+        where={"user_email": user}
+    )
 
     matches = results["documents"][0] if results["documents"] else []
+
     print("Question:", question)
-    print("Results:", results)
     print("Matches:", matches)
 
     if not matches:

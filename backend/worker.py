@@ -1,7 +1,6 @@
 from celery import Celery
 from database import SessionLocal
 from models import AudioFile
-import whisper
 import os
 from dotenv import load_dotenv
 from sumy.parsers.plaintext import PlaintextParser
@@ -11,18 +10,15 @@ from textblob import TextBlob
 from rag_utils import save_transcript_to_vector_db
 
 # -------------------- CELERY CONFIG --------------------
+
 load_dotenv()
 
 broker_url = os.getenv("REDIS_URL")
+
 celery_app = Celery(
     "worker",
     broker=broker_url
 )
-
-# -------------------- LOAD WHISPER MODEL --------------------
-
-print("Loading Whisper AI model...")
-model = whisper.load_model("tiny")
 
 # -------------------- PROCESS AUDIO TASK --------------------
 
@@ -39,6 +35,11 @@ def process_audio(audio_id):
 
         print("Processing:", audio.filepath)
 
+        # -------------------- LOAD WHISPER (LAZY LOAD) --------------------
+        import whisper
+        print("Loading Whisper model...")
+        model = whisper.load_model("tiny")
+
         # -------------------- TRANSCRIPTION --------------------
 
         result = model.transcribe(audio.filepath)
@@ -50,12 +51,12 @@ def process_audio(audio_id):
 
         if transcript:
             save_transcript_to_vector_db(
-    audio.id,
-    audio.transcript,
-    audio.user_email
-)
+                audio.id,
+                transcript,
+                audio.user_email
+            )
 
-        # -------------------- SUMMARY GENERATION --------------------
+        # -------------------- SUMMARY --------------------
 
         try:
             parser = PlaintextParser.from_string(
@@ -66,69 +67,54 @@ def process_audio(audio_id):
             summarizer = LsaSummarizer()
             summary_sentences = summarizer(parser.document, 2)
 
-            summary = " ".join(
-                str(sentence) for sentence in summary_sentences
-            )
+            summary = " ".join(str(s) for s in summary_sentences)
 
             audio.summary = summary if summary else "No summary generated."
 
-        except Exception as summary_error:
-            print("Summary Error:", summary_error)
-            audio.summary = "Summary generation failed."
+        except Exception as e:
+            print("Summary Error:", e)
+            audio.summary = "Summary failed."
 
-        # -------------------- ACTION ITEM EXTRACTION --------------------
+        # -------------------- ACTION ITEMS --------------------
 
         try:
-            action_keywords = [
-                "need to",
-                "must",
-                "should",
-                "deadline",
-                "complete",
-                "finish",
-                "submit",
-                "review",
-                "update",
-                "fix"
+            keywords = [
+                "need to", "must", "should", "deadline",
+                "complete", "finish", "submit", "review",
+                "update", "fix"
             ]
 
             sentences = transcript.split(".")
             actions = []
 
-            for sentence in sentences:
-                sentence_lower = sentence.lower()
+            for s in sentences:
+                s_lower = s.lower()
+                if any(k in s_lower for k in keywords):
+                    actions.append(s.strip())
 
-                for keyword in action_keywords:
-                    if keyword in sentence_lower:
-                        actions.append(sentence.strip())
-                        break
+            audio.action_items = "\n".join(actions[:5]) if actions else "No action items found."
 
-            if actions:
-                audio.action_items = "\n".join(actions[:5])
-            else:
-                audio.action_items = "No action items found."
+        except Exception as e:
+            print("Action Error:", e)
+            audio.action_items = "Action extraction failed."
 
-        except Exception as action_error:
-            print("Action Item Error:", action_error)
-            audio.action_items = "Action item extraction failed."
-
-        # -------------------- SENTIMENT ANALYSIS --------------------
+        # -------------------- SENTIMENT --------------------
 
         try:
-            sentiment_score = TextBlob(transcript).sentiment.polarity
+            score = TextBlob(transcript).sentiment.polarity
 
-            if sentiment_score > 0.1:
+            if score > 0.1:
                 audio.sentiment = "Positive"
-            elif sentiment_score < -0.1:
+            elif score < -0.1:
                 audio.sentiment = "Negative"
             else:
                 audio.sentiment = "Neutral"
 
-        except Exception as sentiment_error:
-            print("Sentiment Error:", sentiment_error)
+        except Exception as e:
+            print("Sentiment Error:", e)
             audio.sentiment = "Neutral"
 
-        # -------------------- FINAL STATUS --------------------
+        # -------------------- FINAL --------------------
 
         audio.status = "completed"
         db.commit()
@@ -136,7 +122,7 @@ def process_audio(audio_id):
         print("Completed:", audio.filename)
 
     except Exception as e:
-        print("Whisper Error:", e)
+        print("Processing Error:", e)
 
         if 'audio' in locals() and audio:
             audio.status = "failed"

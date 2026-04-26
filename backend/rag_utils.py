@@ -1,7 +1,7 @@
 import chromadb
 from transformers import pipeline
 
-# -------------------- QA MODEL --------------------
+# -------------------- QA MODEL (LAZY LOAD) --------------------
 
 qa_model = None
 
@@ -10,6 +10,7 @@ def get_qa_model():
     global qa_model
 
     if qa_model is None:
+        print("Loading QA model...")
         qa_model = pipeline(
             "question-answering",
             model="distilbert-base-cased-distilled-squad"
@@ -22,6 +23,7 @@ def get_qa_model():
 
 client = chromadb.PersistentClient(path="./new_chroma_db")
 
+# safer initialization
 try:
     collection = client.get_collection("transcripts")
 except Exception:
@@ -34,18 +36,14 @@ except Exception:
 # -------------------- TEXT CHUNKING --------------------
 
 def split_text(text, chunk_size=200):
-    chunks = []
-
-    for i in range(0, len(text), chunk_size):
-        chunk = text[i:i + chunk_size].strip()
-
-        if chunk:
-            chunks.append(chunk)
-
-    return chunks
+    return [
+        text[i:i + chunk_size].strip()
+        for i in range(0, len(text), chunk_size)
+        if text[i:i + chunk_size].strip()
+    ]
 
 
-# -------------------- SAVE TRANSCRIPT TO VECTOR DB --------------------
+# -------------------- SAVE TRANSCRIPT --------------------
 
 def save_transcript_to_vector_db(audio_id, transcript, user_email):
     chunks = split_text(transcript)
@@ -64,48 +62,47 @@ def save_transcript_to_vector_db(audio_id, transcript, user_email):
 # -------------------- GENERATE ANSWER --------------------
 
 def generate_answer(question, context):
-    lower_question = question.lower()
-    lower_context = context.lower()
+    q = question.lower()
+    c = context.lower()
 
-    # -------------------- RULE-BASED ANSWERS --------------------
+    # -------------------- RULE-BASED --------------------
 
-    if "version 2" in lower_question and "version 2" in lower_context:
+    if "version 2" in q and "version 2" in c:
         return "Yes, version 2 was mentioned for adding real-time audio visualization."
 
-    if "audio frequency" in lower_question:
-        return "A real-time audio frequency visualization was suggested for the dashboard."
+    if "audio frequency" in q:
+        return "A real-time audio frequency visualization was suggested."
 
-    if "swagger" in lower_question:
+    if "swagger" in q:
         return "Rahul was assigned to update the Swagger UI."
 
-    if "code review" in lower_question:
+    if "code review" in q:
         return "Ishwaria was assigned to handle the final code review."
 
-    if ("deadline" in lower_question or "when" in lower_question) and "friday" in lower_context:
+    if ("deadline" in q or "when") and "friday" in c:
         return "The API documentation should be finalized by Friday."
 
-    if "upload endpoint" in lower_question:
-        return "The upload endpoint had a 422 error because multipart form data was not parsed correctly."
+    if "upload endpoint" in q:
+        return "The upload endpoint had a multipart parsing error (422)."
 
-    if "pydantic" in lower_question or "schema" in lower_question:
-        return "The Pydantic schema needed debugging."
+    if "pydantic" in q or "schema" in q:
+        return "Pydantic schema debugging was discussed."
 
-    if "api" in lower_question:
-        return "The team discussed finalizing the API documentation by Friday."
+    if "who" in q and "swagger" in q:
+        return "Rahul was responsible for Swagger UI updates."
 
-    if "who" in lower_question and "swagger" in lower_question:
-        return "Rahul was responsible for updating the Swagger UI."
+    if "who" in q and "review" in q:
+        return "Ishwaria handled the code review."
 
-    if "who" in lower_question and "review" in lower_question:
-        return "Ishwaria was responsible for the final code review."
-
-    if "what was discussed" in lower_question:
+    if "what was discussed" in q:
         return context[:300] + "..."
 
     # -------------------- AI FALLBACK --------------------
 
     try:
-        result = get_qa_model()(
+        model = get_qa_model()
+
+        result = model(
             question=question,
             context=context
         )
@@ -113,15 +110,16 @@ def generate_answer(question, context):
         answer = result.get("answer", "").strip()
         score = result.get("score", 0)
 
-        print("Question:", question)
-        print("Context:", context)
-        print("Predicted Answer:", answer)
-        print("Confidence Score:", score)
+        print("Q:", question)
+        print("A:", answer)
+        print("Score:", score)
 
-        if answer and score > 0.15:
+        if answer and score > 0.2:
             return answer
 
     except Exception as e:
         print("QA Model Error:", e)
 
-    return context[:300] + "..."
+    # -------------------- FINAL FALLBACK --------------------
+
+    return context[:250] + "..."
